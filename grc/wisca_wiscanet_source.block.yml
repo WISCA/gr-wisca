@@ -22,7 +22,7 @@ parameters:
   value: 1
 - id: start_time
   label: Start Time in UNIX Epoch (s)
-  dtype: int
+  dtype: float
   value: 0
 - id: delay_time
   label: Time between sample sets (cycle time)
