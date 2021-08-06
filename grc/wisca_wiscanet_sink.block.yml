@@ -4,7 +4,7 @@ category: '[wisca]'
 
 templates:
   imports: import wisca
-  make: wisca.wiscanet_sink()
+  make: wisca.wiscanet_sink(${req_num_samps}, ${num_chans}, ${start_time}, ${delay_time}, ${ref_power})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -12,10 +12,26 @@ templates:
 #     * label (label shown in the GUI)
 #     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
 parameters:
-- id: parametername_replace_me
-  label: FIX ME:
-  dtype: string
-  value: You need to fill in your grc/wisca_wiscanet_sink.block.yaml
+- id: req_num_samps
+  label: Number of Samples
+  dtype: int
+  value: 50000
+- id: num_chans
+  label: Number of Channels
+  dtype: int
+  value: 1
+- id: start_time
+  label: Start Time in UNIX Epoch (s)
+  dtype: float
+  value: 0
+- id: delay_time
+  label: Time between sample sets (cycle time)
+  dtype: float
+  value: 5.0
+- id: ref_power
+  label: Reference Power Level (dBm)
+  dtype: float
+  value: 0.0
 #- id: ...
 #  label: ...
 #  dtype: ...
@@ -28,9 +44,9 @@ parameters:
 #      * vlen (optional - data stream vector length. Default is 1)
 #      * optional (optional - set to 1 for optional inputs. Default is 0)
 inputs:
-#- label: ...
-#  domain: ...
-#  dtype: ...
+- label: TX Samples
+  domain: stream
+  dtype: complex
 #  vlen: ...
 #  optional: ...
 

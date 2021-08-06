@@ -44,7 +44,7 @@ inputs:
 #  optional: ...
 
 outputs:
-- label: Samples
+- label: RX Samples
   domain: stream
   dtype: complex
 #  optional: ...
