@@ -76,8 +76,10 @@ class wiscanet_sink(gr.sync_block):
                 while time.time() < self.start_time:
                     time.sleep(200/1000000.0)
 
+                time.sleep(0.2)
                 print("[Local USRP] Finished transmitting\n", flush=True)
                 self.start_time = self.start_time + self.delay_time
+                self.data_buffer = []
         else:
             # Start building the buffer up from 0
             self.data_buffer = in0
