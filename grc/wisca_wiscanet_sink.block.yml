@@ -4,7 +4,7 @@ category: '[wisca]'
 
 templates:
   imports: import wisca
-  make: wisca.wiscanet_sink(${req_num_samps}, ${num_chans}, ${start_time}, ${delay_time}, ${ref_power})
+  make: wisca.wiscanet_sink(${req_num_samps}, ${num_chans}, ${start_time}, ${delay_time}, ${ref_power}, ${ramp_offset})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -32,6 +32,10 @@ parameters:
   label: Reference Power Level (dBm)
   dtype: float
   value: 0.0
+- id: ramp_offset
+  label: Burst Start Sample Offset (Samples)
+  dtype: int
+  value: 10000
 #- id: ...
 #  label: ...
 #  dtype: ...

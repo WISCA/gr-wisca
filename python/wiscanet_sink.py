@@ -12,6 +12,7 @@ from gnuradio import gr
 import socket
 import struct
 import time
+import pmt
 
 class wiscanet_sink(gr.sync_block):
     """
@@ -22,8 +23,10 @@ class wiscanet_sink(gr.sync_block):
     UCONTROL_IP = "127.0.0.1"
     TX_PORT = 9940
     data_buffer = []
+    burst_len = 0
+    ramp_offset = 10000
 
-    def __init__(self, req_num_samps, num_chans, start_time, delay_time, ref_power):
+    def __init__(self, req_num_samps, num_chans, start_time, delay_time, ref_power, ramp_offset):
         gr.sync_block.__init__(self,
             name="wiscanet_sink",
             in_sig=[numpy.complex64, ],
@@ -33,10 +36,38 @@ class wiscanet_sink(gr.sync_block):
         self.start_time = start_time
         self.delay_time = delay_time
         self.ref_power = ref_power
+        self.ramp_offset = ramp_offset
         self.tx_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
+        len0 = len(input_items[0])
+        tags = self.get_tags_in_window(0,0,len0)
+
+        for tag in tags:
+            key = pmt.to_python(tag.key)
+            if key == 'packet_len':
+                self.burst_len = pmt.to_python(tag.value)
+
+        print(self.burst_len)
+        print(len0)
+        # TODO: This works fine if it sends it all in one block, has issues if it doesn't...
+
+        # If the burst_len isn't provided in a tag, fall back to the strategy of filling with req_num_samps from a streaming set of samples
+        if self.burst_len == 0:
+            self.burst_len = self.req_num_samps
+
+        # If the there are fewer samples than the tag, append like we did before
+        if len0 < self.burst_len:
+                self.data_buffer = numpy.append(self.data_buffer, in0)
+
+        # If we have the full thing, handle it, pack it and send
+        if len0 == self.burst_len:
+                prefix  = numpy.zeros((self.ramp_offset,1))
+                postfix = numpy.zeros((self.req_num_samps-self.burst_len-self.ramp_offset,1))
+                self.data_buffer = numpy.append(numpy.append(prefix, in0), postfix)
+
+        # If there are samples already in the buffer
         if len(self.data_buffer) > 0:
             if len(self.data_buffer) < self.req_num_samps:
                 # Continuing filling buffer
@@ -80,8 +111,9 @@ class wiscanet_sink(gr.sync_block):
                 print("[Local USRP] Finished transmitting\n", flush=True)
                 self.start_time = self.start_time + self.delay_time
                 self.data_buffer = []
+                self.burst_len = 0
         else:
             # Start building the buffer up from 0
             self.data_buffer = in0
-        return len(input_items[0])
+        return len0
 
