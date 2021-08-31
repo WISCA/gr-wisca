@@ -123,5 +123,6 @@ class wiscanet_sink(gr.sync_block):
             self.start_time = self.start_time + self.delay_time
             self.data_buffer = []
             self.burst_len = 0
+            self.txReady = False
 
         return len0
