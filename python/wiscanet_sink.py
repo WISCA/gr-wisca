@@ -25,12 +25,13 @@ class wiscanet_sink(gr.sync_block):
     data_buffer = []
     burst_len = 0
     ramp_offset = 10000
+    txReady = False
 
     def __init__(self, req_num_samps, num_chans, start_time, delay_time, ref_power, ramp_offset):
         gr.sync_block.__init__(self,
-            name="wiscanet_sink",
-            in_sig=[numpy.complex64, ],
-            out_sig=None)
+                               name="wiscanet_sink",
+                               in_sig=[numpy.complex64, ],
+                               out_sig=None)
         self.req_num_samps = req_num_samps
         self.num_chans = num_chans
         self.start_time = start_time
@@ -49,71 +50,78 @@ class wiscanet_sink(gr.sync_block):
             if key == 'packet_len':
                 self.burst_len = pmt.to_python(tag.value)
 
-        print(self.burst_len)
-        print(len0)
-        # TODO: This works fine if it sends it all in one block, has issues if it doesn't...
+        print("Burst Length: " + str(self.burst_len))
+        print("Input Sample Length: " + str(len0))
+        print("Current Data Buffer Length: " + str(len(self.data_buffer)))
 
         # If the burst_len isn't provided in a tag, fall back to the strategy of filling with req_num_samps from a streaming set of samples
         if self.burst_len == 0:
             self.burst_len = self.req_num_samps
+            print("Going to wait for ReqNumSamps")
 
         # If the there are fewer samples than the tag, append like we did before
         if len0 < self.burst_len:
-                self.data_buffer = numpy.append(self.data_buffer, in0)
+            self.data_buffer = numpy.append(self.data_buffer, in0)
+            print("Appended to buffer")
 
         # If we have the full thing, handle it, pack it and send
         if len0 == self.burst_len:
-                prefix  = numpy.zeros((self.ramp_offset,1))
-                postfix = numpy.zeros((self.req_num_samps-self.burst_len-self.ramp_offset,1))
-                self.data_buffer = numpy.append(numpy.append(prefix, in0), postfix)
+            prefix  = numpy.zeros((self.ramp_offset,1))
+            postfix = numpy.zeros((self.req_num_samps-self.burst_len-self.ramp_offset,1))
+            self.data_buffer = numpy.append(numpy.append(prefix, in0), postfix)
+            self.txReady = True
+            print("Ready to send!")
 
-        # If there are samples already in the buffer
-        if len(self.data_buffer) > 0:
-            if len(self.data_buffer) < self.req_num_samps:
-                # Continuing filling buffer
-                self.data_buffer = numpy.append(self.data_buffer, in0)
-            else:
-                # We are finally full! Get ready to transmit
-                if len(self.data_buffer) > self.req_num_samps:
-                    self.data_buffer = self.data_buffer[:self.req_num_samps]
-                self.data_buffer = self.data_buffer.reshape(self.req_num_samps, self.num_chans)
-                [in_rows, in_cols] = self.data_buffer.shape # Get shape of input
-                assert in_rows == self.req_num_samps
-                assert in_cols == self.num_chans
-                tx_buff = self.data_buffer.reshape(in_rows*in_cols, 1)
-                interleaved_tx_buff = numpy.zeros((2*in_rows*in_cols, 1))
-                interleaved_tx_buff[::2] = tx_buff.real
-                interleaved_tx_buff[1::2] = tx_buff.imag
-                # in original right here we do a single(transpose(interleaved_tx_buff))
-                print("[Local USRP] Transmitting at %f, %d bytes (%d samples)\n" % (self.start_time, len(interleaved_tx_buff), self.req_num_samps), flush=True)
-                byte_buff = interleaved_tx_buff.astype(numpy.single).tobytes()
-                total_tx = 0
-                tx_len = 0
-                tx_unit = 4095
-                while (total_tx < len(byte_buff)):
-                    if ((len(byte_buff) - total_tx) > tx_unit ):
-                        tx_len = tx_unit
-                    else:
-                        tx_len = len(byte_buff) - total_tx
+        # If we hit the full thing for a burst, wrap it up, pack it and send
+        if len(self.data_buffer) == self.burst_len:
+            prefix = numpy.zeros((self.ramp_offset,1))
+            postfix = numpy.zeros((self.req_num_samps-self.burst_len-self.ramp_offset,1))
+            self.data_buffer = numpy.append(numpy.append(prefix, self.data_buffer), postfix)
+            self.txReady = True
+            print("Ready to send!")
 
-                    self.tx_udp.sendto(byte_buff[total_tx:tx_len+total_tx], (self.UCONTROL_IP, self.TX_PORT))
-                    total_tx = total_tx + tx_len
+        # If the buffer is too long, truncate it
+        if len(self.data_buffer) > self.req_num_samps:
+            self.data_buffer = self.data_buffer[:self.req_num_samps]
 
-                self.tx_udp.sendto(bytearray(struct.pack("d",self.start_time)), (self.UCONTROL_IP, self.TX_PORT))
-                self.tx_udp.sendto(bytearray(struct.pack("Q",self.num_chans)), (self.UCONTROL_IP, self.TX_PORT))
-                self.tx_udp.sendto(bytearray(struct.pack("h",self.ref_power)), (self.UCONTROL_IP, self.TX_PORT))
-                self.tx_udp.sendto(b'', (self.UCONTROL_IP, self.TX_PORT))
+        # We are finally full! Get ready to transmit
+        if self.txReady:
+            self.data_buffer = self.data_buffer.reshape(self.req_num_samps, self.num_chans)
+            [in_rows, in_cols] = self.data_buffer.shape # Get shape of input
+            assert in_rows == self.req_num_samps
+            assert in_cols == self.num_chans
+            tx_buff = self.data_buffer.reshape(in_rows*in_cols, 1)
+            interleaved_tx_buff = numpy.zeros((2*in_rows*in_cols, 1))
+            interleaved_tx_buff[::2] = tx_buff.real
+            interleaved_tx_buff[1::2] = tx_buff.imag
+            # in original right here we do a single(transpose(interleaved_tx_buff))
+            print("[Local USRP] Transmitting at %f, %d bytes (%d samples)\n" % (start_time, len(interleaved_tx_buff), self.req_num_samps), flush=True)
+            byte_buff = interleaved_tx_buff.astype(np.single).tobytes()
+            total_tx = 0
+            tx_len = 0
+            tx_unit = 4095
+            while (total_tx < len(byte_buff)):
+                if ((len(byte_buff) - total_tx) > tx_unit ):
+                    tx_len = tx_unit
+                else:
+                    tx_len = len(byte_buff) - total_tx
 
-                while time.time() < self.start_time:
-                    time.sleep(200/1000000.0)
+                self.tx_udp.sendto(byte_buff[total_tx:tx_len+total_tx], (self.UCONTROL_IP, self.TX_PORT))
+                total_tx = total_tx + tx_len
 
-                time.sleep(0.2)
-                print("[Local USRP] Finished transmitting\n", flush=True)
-                self.start_time = self.start_time + self.delay_time
-                self.data_buffer = []
-                self.burst_len = 0
-        else:
-            # Start building the buffer up from 0
-            self.data_buffer = in0
+            self.tx_udp.sendto(bytearray(struct.pack("d",start_time)), (self.UCONTROL_IP, self.TX_PORT))
+            self.tx_udp.sendto(bytearray(struct.pack("Q",num_chans)), (self.UCONTROL_IP, self.TX_PORT))
+            self.tx_udp.sendto(bytearray(struct.pack("h",ref_power)), (self.UCONTROL_IP, self.TX_PORT))
+            self.tx_udp.sendto(b'', (self.UCONTROL_IP, self.TX_PORT))
+
+            while time.time() < start_time:
+                time.sleep(200/1000000.0)
+
+            time.sleep(0.2)
+            print("[Local USRP] Finished transmitting\n", flush=True)
+
+            self.start_time = self.start_time + self.delay_time
+            self.data_buffer = []
+            self.burst_len = 0
+
         return len0
-
