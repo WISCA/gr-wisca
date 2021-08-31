@@ -95,8 +95,8 @@ class wiscanet_sink(gr.sync_block):
             interleaved_tx_buff[::2] = tx_buff.real
             interleaved_tx_buff[1::2] = tx_buff.imag
             # in original right here we do a single(transpose(interleaved_tx_buff))
-            print("[Local USRP] Transmitting at %f, %d bytes (%d samples)\n" % (start_time, len(interleaved_tx_buff), self.req_num_samps), flush=True)
-            byte_buff = interleaved_tx_buff.astype(np.single).tobytes()
+            print("[Local USRP] Transmitting at %f, %d bytes (%d samples)\n" % (self.start_time, len(interleaved_tx_buff), self.req_num_samps), flush=True)
+            byte_buff = interleaved_tx_buff.astype(numpy.single).tobytes()
             total_tx = 0
             tx_len = 0
             tx_unit = 4095
@@ -114,7 +114,7 @@ class wiscanet_sink(gr.sync_block):
             self.tx_udp.sendto(bytearray(struct.pack("h",ref_power)), (self.UCONTROL_IP, self.TX_PORT))
             self.tx_udp.sendto(b'', (self.UCONTROL_IP, self.TX_PORT))
 
-            while time.time() < start_time:
+            while time.time() < self.start_time:
                 time.sleep(200/1000000.0)
 
             time.sleep(0.2)
