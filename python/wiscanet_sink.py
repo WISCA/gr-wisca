@@ -109,9 +109,9 @@ class wiscanet_sink(gr.sync_block):
                 self.tx_udp.sendto(byte_buff[total_tx:tx_len+total_tx], (self.UCONTROL_IP, self.TX_PORT))
                 total_tx = total_tx + tx_len
 
-            self.tx_udp.sendto(bytearray(struct.pack("d",start_time)), (self.UCONTROL_IP, self.TX_PORT))
-            self.tx_udp.sendto(bytearray(struct.pack("Q",num_chans)), (self.UCONTROL_IP, self.TX_PORT))
-            self.tx_udp.sendto(bytearray(struct.pack("h",ref_power)), (self.UCONTROL_IP, self.TX_PORT))
+            self.tx_udp.sendto(bytearray(struct.pack("d",self.start_time)), (self.UCONTROL_IP, self.TX_PORT))
+            self.tx_udp.sendto(bytearray(struct.pack("Q",self.num_chans)), (self.UCONTROL_IP, self.TX_PORT))
+            self.tx_udp.sendto(bytearray(struct.pack("h",self.ref_power)), (self.UCONTROL_IP, self.TX_PORT))
             self.tx_udp.sendto(b'', (self.UCONTROL_IP, self.TX_PORT))
 
             while time.time() < self.start_time:
