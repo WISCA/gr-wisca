@@ -38,9 +38,11 @@ parameters:
   value: 10000
 - id: normalize
   label: Normalize Buffer to Max of 1
-  dtype: boolean
-  value: False
-#- id: ...
+  dtype: enum
+  default: 'False'
+  options: ['False', 'True']
+  option_labels: ['No', 'Yes']
+  #- id: ...
 #  label: ...
 #  dtype: ...
 
