@@ -26,8 +26,9 @@ class wiscanet_sink(gr.sync_block):
     burst_len = 0
     ramp_offset = 10000
     txReady = False
+    normalize = False
 
-    def __init__(self, req_num_samps, num_chans, start_time, delay_time, ref_power, ramp_offset):
+    def __init__(self, req_num_samps, num_chans, start_time, delay_time, ref_power, ramp_offset, normalize):
         gr.sync_block.__init__(self,
                                name="wiscanet_sink",
                                in_sig=[numpy.complex64, ],
@@ -38,6 +39,7 @@ class wiscanet_sink(gr.sync_block):
         self.delay_time = delay_time
         self.ref_power = ref_power
         self.ramp_offset = ramp_offset
+        self.normalize = normalize
         self.tx_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def work(self, input_items, output_items):
@@ -86,6 +88,10 @@ class wiscanet_sink(gr.sync_block):
 
         # We are finally full! Get ready to transmit
         if self.txReady:
+            # If we are asked to, normalize it to 1 to max the DAC
+            if self.normalize:
+                self.data_buffer = self.data_buffer/max(self.data_buffer)
+
             self.data_buffer = self.data_buffer.reshape(self.req_num_samps, self.num_chans)
             [in_rows, in_cols] = self.data_buffer.shape # Get shape of input
             assert in_rows == self.req_num_samps
