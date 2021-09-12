@@ -52,19 +52,17 @@ class wiscanet_sink(gr.sync_block):
             if key == 'packet_len':
                 self.burst_len = pmt.to_python(tag.value)
 
-        print("Burst Length: " + str(self.burst_len))
-        print("Input Sample Length: " + str(len0))
-        print("Current Data Buffer Length: " + str(len(self.data_buffer)))
+        #print("Burst Length: " + str(self.burst_len))
+        #print("Input Sample Length: " + str(len0))
+        #print("Current Data Buffer Length: " + str(len(self.data_buffer)))
 
         # If the burst_len isn't provided in a tag, fall back to the strategy of filling with req_num_samps from a streaming set of samples
         if self.burst_len == 0:
             self.burst_len = self.req_num_samps
-            print("Going to wait for ReqNumSamps")
 
         # If the there are fewer samples than the tag, append like we did before
         if len0 < self.burst_len:
             self.data_buffer = numpy.append(self.data_buffer, in0)
-            print("Appended to buffer")
 
         # If we have the full thing, handle it, pack it and send
         if len0 == self.burst_len:
@@ -72,7 +70,6 @@ class wiscanet_sink(gr.sync_block):
             postfix = numpy.zeros((self.req_num_samps-self.burst_len-self.ramp_offset,1))
             self.data_buffer = numpy.append(numpy.append(prefix, in0), postfix)
             self.txReady = True
-            print("Ready to send!")
 
         # If we hit the full thing for a burst, wrap it up, pack it and send
         if len(self.data_buffer) == self.burst_len:
@@ -80,7 +77,6 @@ class wiscanet_sink(gr.sync_block):
             postfix = numpy.zeros((self.req_num_samps-self.burst_len-self.ramp_offset,1))
             self.data_buffer = numpy.append(numpy.append(prefix, self.data_buffer), postfix)
             self.txReady = True
-            print("Ready to send!")
 
         # If the buffer is too long, truncate it
         if len(self.data_buffer) > self.req_num_samps:
@@ -91,7 +87,6 @@ class wiscanet_sink(gr.sync_block):
             # If we are asked to, normalize it to 1 to max the DAC
             if self.normalize:
                 self.data_buffer = self.data_buffer/max(self.data_buffer)
-                print("Normalizing!")
 
             self.data_buffer = self.data_buffer.reshape(self.req_num_samps, self.num_chans)
             [in_rows, in_cols] = self.data_buffer.shape # Get shape of input
@@ -102,7 +97,7 @@ class wiscanet_sink(gr.sync_block):
             interleaved_tx_buff[::2] = tx_buff.real
             interleaved_tx_buff[1::2] = tx_buff.imag
             # in original right here we do a single(transpose(interleaved_tx_buff))
-            print("[Local USRP] Transmitting at %f, %d bytes (%d samples)\n" % (self.start_time, len(interleaved_tx_buff), self.req_num_samps), flush=True)
+            print("\n[Local USRP] Transmitting at %f, %d bytes (%d samples)" % (self.start_time, len(interleaved_tx_buff), self.req_num_samps), flush=True)
             byte_buff = interleaved_tx_buff.astype(numpy.single).tobytes()
             total_tx = 0
             tx_len = 0

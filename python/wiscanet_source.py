@@ -54,7 +54,7 @@ class wiscanet_source(gr.basic_block):
 
     def rx_data(self):
         for i in range(0, self.ncycles):
-            print("[Local USRP] Receiving at %f for %d channels\n" % (self.start_time, self.num_chans), flush=True)
+            print("\n[Local USRP] Receiving at %f for %d channels" % (self.start_time, self.num_chans), flush=True)
             # Control Receive (aka send the self.start_time)
             self.rx_udp_con.sendto(bytearray(struct.pack("dd",self.start_time,0)), (self.UCONTROL_IP, self.RX_PORTCON)) # This has to send that zeroed second buffer, because the uControl/MEX version is sloppy
             self.rx_udp_con.sendto(bytearray(struct.pack("H",self.num_chans)), (self.UCONTROL_IP, self.RX_PORTCON))
@@ -69,7 +69,7 @@ class wiscanet_source(gr.basic_block):
                     retval = len(temp_buff)
                     byte_buff.extend(bytearray(temp_buff))
                     if (retval == 0):
-                        print("[Local USRP] Completed one receiving cycle\n", flush=True)
+                        print("[Local USRP] Completed one receiving cycle", flush=True)
 
                 readlen = retval if retval > 0 else 0
                 buf_pos = buf_pos + readlen
