@@ -23,6 +23,7 @@ except ModuleNotFoundError:
 from .wiscanet_source import wiscanet_source
 from .wiscanet_sink import wiscanet_sink
 from .sync_and_Eq import sync_and_Eq
+from .print_bytes import print_bytes
 
 
 #

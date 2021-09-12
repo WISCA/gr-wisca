@@ -24,7 +24,8 @@ GR_PYTHON_INSTALL(
     __init__.py
     wiscanet_source.py
     wiscanet_sink.py
-    sync_and_Eq.py DESTINATION ${GR_PYTHON_DIR}/wisca
+    sync_and_Eq.py
+    print_bytes.py DESTINATION ${GR_PYTHON_DIR}/wisca
 )
 
 ########################################################################

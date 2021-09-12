@@ -8,5 +8,6 @@
 install(FILES
     wisca_wiscanet_source.block.yml
     wisca_wiscanet_sink.block.yml
-    wisca_sync_and_Eq.block.yml DESTINATION share/gnuradio/grc/blocks
+    wisca_sync_and_Eq.block.yml
+    wisca_print_bytes.block.yml DESTINATION share/gnuradio/grc/blocks
 )
