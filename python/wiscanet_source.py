@@ -11,8 +11,10 @@ import numpy
 from gnuradio import gr
 import socket
 import struct
+import threading
+import pmt
 
-class wiscanet_source(gr.sync_block):
+class wiscanet_source(gr.basic_block):
     """
     docstring for block wiscanet_source
     """
@@ -22,36 +24,36 @@ class wiscanet_source(gr.sync_block):
     UCONTROL_IP = "127.0.0.1"
     RX_PORT = 9944
     RX_PORTCON = 9945
+    rx_thread = None
 
-
-    def __init__(self, req_num_samps, num_chans, start_time, delay_time):
-        gr.sync_block.__init__(self,
-            name="wiscanet_source",
+    def __init__(self, req_num_samps, num_chans, start_time, delay_time, ncycles):
+        gr.basic_block.__init__(self,
+            name="WISCANet Source",
             in_sig=None,
-            out_sig=[numpy.complex64, ])
+            out_sig=None)
         self.req_num_samps = req_num_samps
         self.num_chans = num_chans
         self.start_time = start_time
         self.delay_time = delay_time
+        self.ncycles = ncycles
         self.data_buffer = []
         print("Connecting Receive Controller (Ports: 9944, 9945)\n", flush=True)
         self.rx_udp_con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rx_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rx_udp.bind((self.UCONTROL_IP, self.RX_PORT))
+        self.message_port_register_out(pmt.intern('pdu_out'))
+        self.rx_thread = threading.Thread(target=self.rx_data, args=())
 
+    def start(self):
+        self.rx_thread.start()
+        return True
 
-    def work(self, input_items, output_items):
-        out = output_items[0]
-        out_len = len(output_items[0])
-        if len(self.data_buffer) > 0:
-            if len(self.data_buffer) < out_len:
-                temp = numpy.zeros(out_len,numpy.complex64)
-                temp[:len(self.data_buffer)] = self.data_buffer
-                self.data_buffer = []
-            else:
-                out[:] = self.data_buffer[:out_len]
-                self.data_buffer = self.data_buffer[out_len:]
-        else:
+    def stop(self):
+        self.rx_thread.join()
+        return True
+
+    def rx_data(self):
+        for i in range(0, self.ncycles):
             print("[Local USRP] Receiving at %f for %d channels\n" % (self.start_time, self.num_chans), flush=True)
             # Control Receive (aka send the self.start_time)
             self.rx_udp_con.sendto(bytearray(struct.pack("dd",self.start_time,0)), (self.UCONTROL_IP, self.RX_PORTCON)) # This has to send that zeroed second buffer, because the uControl/MEX version is sloppy
@@ -80,7 +82,8 @@ class wiscanet_source(gr.sync_block):
             rx_buff_complex = rx_buff_scaled[::2] + rx_buff_scaled[1::2] * 1j
             self.data_buffer = rx_buff_complex.reshape((self.req_num_samps, self.num_chans)).flatten() # This only allows it to work for one dimension (1 channel for now)
             print("[Local USRP] Finished receiving %d complex samples at time %f\n" % (len(rx_buff), self.start_time), flush=True)
-            out[:] = self.data_buffer[:out_len]
-            self.data_buffer = self.data_buffer[out_len:]
+            outInfo = pmt.make_dict()
+            outData = pmt.to_pmt(self.data_buffer.astype(numpy.csingle))
+            rxOut = pmt.cons(outInfo, outData)
+            self.message_port_pub(pmt.intern('pdu_out'), rxOut)
             self.start_time = self.start_time + self.delay_time # Increment start_time by appropriate delay
-        return out_len
