@@ -16,7 +16,7 @@ class print_bytes(gr.sync_block):
     """
     def __init__(self):
         gr.sync_block.__init__(self,
-            name="print_bytes",
+            name="Byte Printer",
             in_sig=[np.uint8],
             out_sig=None)
 

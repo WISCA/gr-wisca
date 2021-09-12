@@ -1,5 +1,5 @@
 id: wisca_print_bytes
-label: print_bytes
+label: Byte Printer
 category: '[wisca]'
 
 templates:

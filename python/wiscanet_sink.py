@@ -30,7 +30,7 @@ class wiscanet_sink(gr.sync_block):
 
     def __init__(self, req_num_samps, num_chans, start_time, delay_time, ref_power, ramp_offset, normalize):
         gr.sync_block.__init__(self,
-                               name="wiscanet_sink",
+                               name="WISCANet Sink",
                                in_sig=[numpy.complex64, ],
                                out_sig=None)
         self.req_num_samps = req_num_samps

@@ -1,5 +1,5 @@
 id: wisca_wiscanet_sink
-label: wiscanet_sink
+label: WISCANet Sink
 category: '[wisca]'
 
 templates:
