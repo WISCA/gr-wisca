@@ -39,8 +39,6 @@ class sync_and_Eq(gr.basic_block):
         rfData = pmt.to_python(pmt.cdr(msg))
         (rxTC, tEst, pEst) = time_align(rfData, self.psf_taps, self.access_code, self.sps, self.frame_size)
         (rxEq, _) = mmse_equalizer(rxTC, self.access_code, rxTC[0:len(self.access_code)], self.eq_len, 0)
-        savemat('/home/jholtom/testout.mat',{'rxEq': rxEq})
-        print("finished saving")
         outInfo = pmt.to_pmt({'frame_len': len(rxEq)})
         outData = pmt.to_pmt(rxEq.astype(np.csingle))
         rxOut = pmt.cons(outInfo, outData)
