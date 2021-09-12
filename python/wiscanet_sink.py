@@ -87,7 +87,6 @@ class wiscanet_sink(gr.sync_block):
             # If we are asked to, normalize it to 1 to max the DAC
             if self.normalize:
                 self.data_buffer = self.data_buffer/max(self.data_buffer)
-                print("Normalizing!")
 
             self.data_buffer = self.data_buffer.reshape(self.req_num_samps, self.num_chans)
             [in_rows, in_cols] = self.data_buffer.shape # Get shape of input
