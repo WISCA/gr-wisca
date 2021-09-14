@@ -47,7 +47,7 @@ class mmse_beamformer(gr.basic_block):
             z_trn = np.ndarray((4,trn_l), np.complex64)
             for i in range(0,len(self.burst_q)):
                 d = self.burst_q[i].get()
-                (rxF, _, _) = time_align(d, self.psf_taps, self.training_symbols, self.sps, trn_l)
+                (rxF, tC, _) = time_align(d, self.psf_taps, self.training_symbols, self.sps, trn_l)
                 (rxM, _) = mmse_equalizer(rxF, s_trn, rxF, 15, 0)
                 z_trn[i] = rxM
             # Output estimated symbols

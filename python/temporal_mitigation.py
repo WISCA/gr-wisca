@@ -42,13 +42,15 @@ class temporal_mitigation(gr.sync_block):
         self.burst_q[chan].put(rfData)
         # Check if all queues have a data thing to use
         if all([not q.empty() for q in self.burst_q]) and not self.est_symbols.empty():
+            print("got 4 channels ready and some symbols")
             remodSyms = self.est_symbols.get()
             trn_l = len(remodSyms)
             z_rf = np.ndarray((4,trn_l), np.complex64)
             for i in range(0,len(self.burst_q)):
                 d = self.burst_q[i].get()
-                z_trn[i] = d
-            rxProj = temporal_projection(remodSyms, z_rf, self.ndelays) 
+                z_rf[i] = d[0:trn_l]
+            rxProj = temporal_projection(remodSyms, z_rf, self.ndelays)
+            savemat('/home/jholtom/projected_sig.mat', {'rxProj': rxProj, 'remodSyms': remodSyms, 'z_rf': z_rf})
             outInfo = pmt.to_pmt({'frame_len': len(rxProj)})
             outData = pmt.to_pmt(rxProj.astype(np.csingle))
             rxOut = pmt.cons(outInfo, outData)

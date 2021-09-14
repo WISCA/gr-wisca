@@ -4,7 +4,7 @@ category: '[wisca]'
 
 templates:
   imports: import wisca
-  make: wisca.temporal_mitigation()
+  make: wisca.temporal_mitigation(${ndelays})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -12,9 +12,9 @@ templates:
 #     * label (label shown in the GUI)
 #     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
 parameters:
-#- id: ...
-#  label: ...
-#  dtype: ...
+- id: ndelays
+  label: Number of Delay Taps
+  dtype: int
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:
