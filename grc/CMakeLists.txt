@@ -9,5 +9,7 @@ install(FILES
     wisca_wiscanet_source.block.yml
     wisca_wiscanet_sink.block.yml
     wisca_sync_and_Eq.block.yml
-    wisca_print_bytes.block.yml DESTINATION share/gnuradio/grc/blocks
+    wisca_print_bytes.block.yml
+    wisca_temporal_mitigation.block.yml
+    wisca_mmse_beamformer.block.yml DESTINATION share/gnuradio/grc/blocks
 )

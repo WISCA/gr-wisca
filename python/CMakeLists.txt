@@ -25,7 +25,9 @@ GR_PYTHON_INSTALL(
     wiscanet_source.py
     wiscanet_sink.py
     sync_and_Eq.py
-    print_bytes.py DESTINATION ${GR_PYTHON_DIR}/wisca
+    print_bytes.py
+    temporal_mitigation.py
+    mmse_beamformer.py DESTINATION ${GR_PYTHON_DIR}/wisca
 )
 
 ########################################################################
