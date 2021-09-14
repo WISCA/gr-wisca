@@ -43,9 +43,14 @@ class temporal_mitigation(gr.sync_block):
         # Check if all queues have a data thing to use
         if all([not q.empty() for q in self.burst_q]) and not self.est_symbols.empty():
             remodSyms = self.est_symbols.get()
-            rxProj = temporal_projection(remodSyms, self.ndelays) 
-            outInfo = pmt.to_pmt({'frame_len': len(rxEq)})
-            outData = pmt.to_pmt(rxEq.astype(np.csingle))
+            trn_l = len(remodSyms)
+            z_rf = np.ndarray((4,trn_l), np.complex64)
+            for i in range(0,len(self.burst_q)):
+                d = self.burst_q[i].get()
+                z_trn[i] = d
+            rxProj = temporal_projection(remodSyms, z_rf, self.ndelays) 
+            outInfo = pmt.to_pmt({'frame_len': len(rxProj)})
+            outData = pmt.to_pmt(rxProj.astype(np.csingle))
             rxOut = pmt.cons(outInfo, outData)
             self.message_port_pub(pmt.intern('pdu_out'), rxOut)
 
