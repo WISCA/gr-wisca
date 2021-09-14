@@ -87,8 +87,9 @@ class wiscanet_source(gr.basic_block):
             rxOut = pmt.cons(outInfo, outData)
             self.message_port_pub(pmt.intern('pdu_out'), rxOut)
             self.start_time = self.start_time + self.delay_time # Increment start_time by appropriate delay
-        print("finished cycles")
+            print("on cycle: " + str(i))
+
         zeroInfo = pmt.make_dict()
-        zeroData = pmt.make_c64vector(1024,0)
+        zeroData = pmt.make_c64vector(self.req_num_samps, 0)
         zeroOut = pmt.cons(zeroInfo, zeroData)
         self.message_port_pub(pmt.intern('pdu_out'), zeroOut)
