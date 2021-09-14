@@ -24,7 +24,7 @@ parameters:
 #      * vlen (optional - data stream vector length. Default is 1)
 #      * optional (optional - set to 1 for optional inputs. Default is 0)
 inputs:
-- label: est_symbols
+- label: mitigation_syms
   domain: message
 - label: bursts
   domain: message

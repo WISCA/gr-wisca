@@ -10,7 +10,6 @@
 import numpy as np
 import scipy.linalg as la
 import scipy.signal as sig
-from scipy.io import savemat
 from gnuradio import gr
 import pmt
 import queue
@@ -54,9 +53,14 @@ class mmse_beamformer(gr.basic_block):
             # Output estimated symbols
             w = np.matmul(la.inv(np.matmul(z_trn,z_trn.T.conj())),np.matmul(z_trn,s_trn.T.conj()))
             rxEq = np.matmul(w.T.conj(),z_trn)
+            # Demodulate BPSK (initial phase rotation of pi in MATLAB)
+            rxBits = rxEq > 0
+            # Remodulate - same logic as above
+            modSyms = (rxBits-0.5)*2;
+            remodSyms = sig.upfirdn(self.psf_taps, modSyms, self.sps, 1)
             #savemat('/home/jholtom/test_mmse_bf.mat',{'rxMMSE': rxEq, 'z_trn': z_trn, 's_trn': s_trn})
-            outInfo = pmt.to_pmt({'frame_len': len(rxEq)})
-            outData = pmt.to_pmt(rxEq.astype(np.csingle))
+            outInfo = pmt.to_pmt({'frame_len': len(remodSyms)})
+            outData = pmt.to_pmt(remodSyms.astype(np.csingle))
             rxOut = pmt.cons(outInfo, outData)
             self.message_port_pub(pmt.intern('est_symbols'), rxOut)
 
