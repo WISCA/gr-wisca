@@ -29,6 +29,7 @@ class temporal_mitigation(gr.sync_block):
         self.message_port_register_in(pmt.intern('bursts'))
         self.message_port_register_in(pmt.intern('mitigation_syms'))
         self.message_port_register_out(pmt.intern('pdu_out'))
+        self.message_port_register_out(pmt.intern('raw_out'))
         self.set_msg_handler(pmt.intern('bursts'), self.handle_msg)
         self.set_msg_handler(pmt.intern('mitigation_syms'), self.handle_est_syms)
 
@@ -52,6 +53,10 @@ class temporal_mitigation(gr.sync_block):
             outData = pmt.to_pmt(rxProj.astype(np.csingle))
             rxOut = pmt.cons(outInfo, outData)
             self.message_port_pub(pmt.intern('pdu_out'), rxOut)
+            rawInfo = pmt.to_pmt({'frame_len': len(z_rf)})
+            rawData = pmt.to_pmt(z_rf.astype(np.csingle))
+            rawOut = pmt.cons(rawInfo, rawData)
+            self.message_port_pub(pmt.intern('raw_out'), rawOut)
 
     def handle_est_syms(self, msg):
         info_dict = pmt.to_python(pmt.car(msg))
